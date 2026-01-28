@@ -27,27 +27,33 @@ fun GameScreen(
     val greenBackground = Color(0xFF388E3C)
     val emptySlotColor = Color.White.copy(alpha = 0.3f)
 
-    // ★ 変更点1: 全体を Column（縦並び）に変更
-    Column(
+    // カードの縦横比
+    val cardAspectRatio = 2.0f / 3.0f
+
+    // 全体を Row（横並び）レイアウト
+    Row(
         modifier = Modifier
             .fillMaxSize()
             .background(greenBackground)
-            .padding(8.dp)
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+
         // ------------------------------------------------
-        // 上段エリア: [山札] [捨て札] ... [組札1] [組札2] [組札3] [組札4]
+        // 左エリア: 山札 & 捨て札 (縦並び)
         // ------------------------------------------------
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1.5f), // 画面の高さの約1.5割
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                .weight(1.2f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- 山札 (Stock) ---
+            // --- 山札 ---
             Box(
                 modifier = Modifier
-                    .weight(1f) // 幅を均等割
-                    .aspectRatio(2.5f / 3.5f)
+                    .fillMaxWidth()
+                    .aspectRatio(cardAspectRatio)
             ) {
                 if (gameState.stock.isNotEmpty()) {
                     CardView(
@@ -58,20 +64,22 @@ fun GameScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .border(2.dp, emptySlotColor, RoundedCornerShape(4.dp))
+                            .border(1.dp, emptySlotColor, RoundedCornerShape(2.dp))
                             .clickable { viewModel.onStockClicked() },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("↺", color = emptySlotColor, fontSize = 24.sp)
+                        Text("↺", color = emptySlotColor, fontSize = 14.sp)
                     }
                 }
             }
 
-            // --- 捨て札 (Waste) ---
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // --- 捨て札 ---
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(2.5f / 3.5f)
+                    .fillMaxWidth()
+                    .aspectRatio(cardAspectRatio)
             ) {
                 if (gameState.waste.isNotEmpty()) {
                     val card = gameState.waste.last()
@@ -81,69 +89,51 @@ fun GameScreen(
                     )
                 }
             }
-
-            // --- スペーサー（隙間） ---
-            // 山札・捨て札と、右側の組札の間を少し空ける
-            Spacer(modifier = Modifier.weight(0.5f))
-
-            // --- 組札 (Foundations) x 4 ---
-            val suitIcons = listOf("♥", "♦", "♣", "♠")
-            gameState.foundations.forEachIndexed { index, pile ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(2.5f / 3.5f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (pile.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(4.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = suitIcons[index],
-                                fontSize = 20.sp,
-                                color = emptySlotColor
-                            )
-                        }
-                    } else {
-                        CardView(card = pile.last())
-                    }
-                }
-            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         // ------------------------------------------------
-        // 下段エリア: 場札 (Tableau) x 7列
+        // 中央エリア: 場札 x 7列 (横並び)
         // ------------------------------------------------
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(7f), // 残りのスペースを大きく使う
+                .weight(6f)
+                .fillMaxHeight(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             gameState.tableau.forEachIndexed { index, pile ->
                 Box(modifier = Modifier.weight(1f)) {
-                    Column {
-                        // 空枠
+                    // 列全体をラップするBox
+                    Box(modifier = Modifier.fillMaxSize()) {
+
+                        // 空枠（カードがない時用）
                         if (pile.isEmpty()) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .aspectRatio(2.5f / 3.5f)
-                                    .border(1.dp, emptySlotColor, RoundedCornerShape(4.dp))
+                                    .aspectRatio(cardAspectRatio)
+                                    .border(1.dp, emptySlotColor, RoundedCornerShape(2.dp))
                             )
                         }
 
-                        // カードの重なり
+                        // ★★★ スマートな重なり配置 ★★★
+                        // Columnではなく、Boxの中でpaddingを使って位置を計算します
                         pile.forEachIndexed { cardIndex, card ->
+
+                            // このカードより前にある「裏向き」と「表向き」の枚数を数える
+                            val previousCards = pile.take(cardIndex)
+                            val faceDownCount = previousCards.count { !it.isFaceUp }
+                            val faceUpCount = previousCards.count { it.isFaceUp }
+
+                            // ズラす量を計算
+                            // 裏向き: 6dpずつ（ほぼ重なる）
+                            // 表向き: 20dpずつ（数字が見える程度）
+                            val topOffset = (faceDownCount * 6).dp + (faceUpCount * 20).dp
+
                             Box(
                                 modifier = Modifier
-                                    .padding(top = (cardIndex * 25).dp) // 少し詰め気味に重ねる
+                                    .padding(top = topOffset) // ここで位置を決定
+                                    .fillMaxWidth()
+                                    .aspectRatio(cardAspectRatio)
                             ) {
                                 CardView(
                                     card = card,
@@ -151,6 +141,43 @@ fun GameScreen(
                                 )
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        // ------------------------------------------------
+        // 右エリア: 組札 x 4 (縦並び)
+        // ------------------------------------------------
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val suitIcons = listOf("♥", "♦", "♣", "♠")
+            gameState.foundations.forEachIndexed { index, pile ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(cardAspectRatio),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (pile.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(2.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = suitIcons[index],
+                                fontSize = 10.sp,
+                                color = emptySlotColor
+                            )
+                        }
+                    } else {
+                        CardView(card = pile.last())
                     }
                 }
             }
