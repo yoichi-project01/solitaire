@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.solitaire.model.Card
@@ -32,8 +33,6 @@ fun CardView(
 
     Box(
         modifier = modifier
-            // ★変更: 少し細長い比率に変更 (横幅を狭くする)
-            .aspectRatio(2.2f / 3.5f)
             .clip(shape)
             .background(if (card.isFaceUp) Color.White else Color.Transparent)
             .background(
@@ -42,26 +41,35 @@ fun CardView(
             )
             .border(0.5.dp, Color(0xFFE0E0E0), shape)
             .clickable { onClick() }
-            // ★変更: パディングを0.5dpへ極小化
-            .padding(0.5.dp)
+            // ★変更: 余白を極小のまま維持（文字スペース確保のため）
+            .padding(1.dp)
     ) {
         if (card.isFaceUp) {
             // --- 表向きのデザイン ---
 
             // 左上の数字とマーク
-            Column(modifier = Modifier.align(Alignment.TopStart)) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 1.dp, top = 0.dp), // 位置微調整
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
                     text = card.rank.label,
                     color = card.suit.color,
                     fontWeight = FontWeight.Bold,
-                    // ★変更: フォントサイズをさらに小さく (8sp -> 7sp)
-                    fontSize = 7.sp
+                    // ★変更: 6.sp -> 11.sp (倍近く大きく)
+                    fontSize = 11.sp,
+                    lineHeight = 11.sp,
+                    textAlign = TextAlign.Center
                 )
                 Text(
                     text = card.suit.label,
                     color = card.suit.color,
-                    // ★変更: (8sp -> 7sp)
-                    fontSize = 7.sp
+                    // ★変更: 6.sp -> 11.sp
+                    fontSize = 11.sp,
+                    lineHeight = 11.sp,
+                    textAlign = TextAlign.Center
                 )
             }
 
@@ -69,28 +77,34 @@ fun CardView(
             Text(
                 text = card.suit.label,
                 color = card.suit.color,
-                // ★変更: (16sp -> 14sp)
-                fontSize = 14.sp,
+                // ★変更: 12.sp -> 22.sp (大きく目立たせる)
+                fontSize = 22.sp,
                 modifier = Modifier.align(Alignment.Center)
             )
 
-            // 右下の数字とマーク
+            // 右下の数字とマーク (逆さま)
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                horizontalAlignment = Alignment.End
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 1.dp, bottom = 0.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = card.suit.label,
                     color = card.suit.color,
-                    // ★変更: (8sp -> 7sp)
-                    fontSize = 7.sp
+                    // ★変更: 6.sp -> 11.sp
+                    fontSize = 11.sp,
+                    lineHeight = 11.sp,
+                    textAlign = TextAlign.Center
                 )
                 Text(
                     text = card.rank.label,
                     color = card.suit.color,
                     fontWeight = FontWeight.Bold,
-                    // ★変更: (8sp -> 7sp)
-                    fontSize = 7.sp
+                    // ★変更: 6.sp -> 11.sp
+                    fontSize = 11.sp,
+                    lineHeight = 11.sp,
+                    textAlign = TextAlign.Center
                 )
             }
         } else {
@@ -98,8 +112,7 @@ fun CardView(
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    // ★変更: 裏面の模様も小さく (8dp -> 6dp)
-                    .size(6.dp)
+                    .size(8.dp)
                     .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(50))
             )
         }

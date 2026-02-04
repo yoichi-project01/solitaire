@@ -52,7 +52,6 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    // ▼▼▼ この関数が足りていませんでした ▼▼▼
     fun onStockClicked() {
         _gameState.update { currentState ->
             val newStock = currentState.stock.toMutableList()
@@ -67,14 +66,11 @@ class GameViewModel : ViewModel() {
                 newWaste.clear()
             }
 
-            currentState.copy(
-                stock = newStock,
-                waste = newWaste
-            )
+            currentState.copy(stock = newStock, waste = newWaste)
         }
     }
-    // ▲▲▲ ここまで ▲▲▲
 
+    // タップ移動用（既存）
     fun onCardClicked(card: Card, fromPileType: String, pileIndex: Int) {
         val currentState = _gameState.value
 
@@ -95,6 +91,28 @@ class GameViewModel : ViewModel() {
             if (SolitaireRules.canMoveToTableau(card, tableauPile)) {
                 moveCardToTableau(card, fromPileType, pileIndex, i)
                 return
+            }
+        }
+    }
+
+    // ★追加: ドラッグ＆ドロップ用（指定された場所に移動を試みる）
+    fun onCardDropped(card: Card, fromType: String, fromIndex: Int, targetType: String, targetIndex: Int) {
+        val currentState = _gameState.value
+
+        if (targetType == "Foundation") {
+            // 組札へのドロップ
+            val foundationPile = currentState.foundations[targetIndex]
+            if (SolitaireRules.canMoveToFoundation(card, foundationPile)) {
+                moveCardToFoundation(card, fromType, fromIndex, targetIndex)
+            }
+        } else if (targetType == "Tableau") {
+            // 場札へのドロップ
+            val tableauPile = currentState.tableau[targetIndex]
+            // 同じ列へのドロップは無視
+            if (fromType == "Tableau" && fromIndex == targetIndex) return
+
+            if (SolitaireRules.canMoveToTableau(card, tableauPile)) {
+                moveCardToTableau(card, fromType, fromIndex, targetIndex)
             }
         }
     }
